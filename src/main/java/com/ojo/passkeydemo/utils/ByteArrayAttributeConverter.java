@@ -1,6 +1,8 @@
 package com.ojo.passkeydemo.utils;
 
 import com.yubico.webauthn.data.ByteArray;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 
 import java.util.Base64;
 
