@@ -1,16 +1,15 @@
 package com.ojo.passkeydemo.security;
 
 import com.ojo.passkeydemo.config.WebAuthnConfig;
-import com.webauthn4j.springframework.security.config.configurers.WebAuthnLoginConfigurer;
+import com.ojo.passkeydemo.services.impls.RegistrationService;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.context.annotation.Configuration;
 
 import java.util.Collections;
-
+@Configuration
 public class SecurityConfig {
 
     @Bean
@@ -27,5 +26,10 @@ public class SecurityConfig {
                 .origins(Collections.singleton(properties.getOrigin()))
                 .build();
     }
+
+//    @Bean
+//    public CacheManager cacheManager() {
+//        return new ConcurrentMapCacheManager("yourCacheName");
+//    }
     
 }

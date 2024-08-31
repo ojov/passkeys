@@ -1,9 +1,30 @@
 package com.ojo.passkeydemo.services.impls;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ojo.passkeydemo.entities.AuthSupport;
+import com.ojo.passkeydemo.entities.AuthUser;
+import com.ojo.passkeydemo.entities.Authenticator;
+import com.ojo.passkeydemo.repositories.AuthSupportRepo;
+import com.ojo.passkeydemo.repositories.AuthUserRepo;
+import com.ojo.passkeydemo.repositories.AuthenticatorRepo;
+import com.ojo.passkeydemo.responses.AuthRegisterResponse;
+import com.ojo.passkeydemo.responses.AuthVerifyResponseDTO;
 import com.ojo.passkeydemo.services.ReverseAuthService;
-import com.yubico.webauthn.RelyingParty;
+import com.ojo.passkeydemo.utils.GenerateRandom;
+import com.yubico.webauthn.*;
+import com.yubico.webauthn.data.*;
+import com.yubico.webauthn.exception.AssertionFailedException;
+import com.yubico.webauthn.exception.RegistrationFailedException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.io.IOException;
+import java.util.Objects;
 
 // ReverseAuthServiceImpl.java
 @Service
@@ -11,7 +32,7 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
 
     private final RelyingParty relyingParty;
     private final AuthUserRepo authUserRepo;
-    private final AuthenticatorRepository authenticatorRepository;
+    private final AuthenticatorRepo authenticatorRepository;
     private final GenerateRandom generateRandom;
     private final ObjectMapper mapper;
     private final AuthSupportRepo authSupportRepo;
@@ -19,7 +40,7 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
 
     @Autowired
     public ReverseAuthServiceImpl(RelyingParty relyingParty, AuthUserRepo authUserRepo,
-                                  AuthenticatorRepository authenticatorRepository, GenerateRandom generateRandom,
+                                  AuthenticatorRepo authenticatorRepository, GenerateRandom generateRandom,
                                   ObjectMapper mapper, AuthSupportRepo authSupportRepo, CacheManager cacheManager) {
         this.relyingParty = relyingParty;
         this.authUserRepo = authUserRepo;
@@ -30,9 +51,10 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
         this.cacheManager = cacheManager;
     }
 
+
     @Override
     public AuthRegisterResponse registerAuthUser(String userName) {
-        boolean existingUser = authUserRepo.existsById(userName);
+        boolean existingUser = authUserRepo.existsByUserName(userName);
         if (!existingUser) {
             UserIdentity userIdentity = UserIdentity.builder()
                     .name(userName)
@@ -73,7 +95,7 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
     @Override
     public boolean finishRegisterAuthUser(String userName, String credential) {
         try {
-            AuthUser authUser = authUserRepo.findById(userName).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+            AuthUser authUser = authUserRepo.findAuthUserByUserName(userName).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
             PublicKeyCredentialCreationOptions requestOptions = (PublicKeyCredentialCreationOptions) getPkcFromCache(userName);
             if (requestOptions != null) {
                 PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> pkc =

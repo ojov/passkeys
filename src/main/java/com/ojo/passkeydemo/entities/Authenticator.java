@@ -1,9 +1,14 @@
 package com.ojo.passkeydemo.entities;
 
+import com.yubico.webauthn.RegistrationResult;
+import com.yubico.webauthn.data.AttestedCredentialData;
+import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
 import com.yubico.webauthn.data.ByteArray;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.Optional;
 
 @Entity
 @Getter
